@@ -20,12 +20,13 @@ const generateRequireSignInWrapper = (
     }
 
     class GatedPage extends React.Component<WrapperProps> {
-      public componentWillReceiveProps(nextProps: WrapperProps): void {
+      public componentDidMount(): void {
         const {
           history,
           hasVerificationBeenAttempted,
           isSignedIn,
-        } = nextProps
+        } = this.props
+
         if (hasVerificationBeenAttempted && !isSignedIn) {
           history.replace(redirectPathIfNotSignedIn)
         }

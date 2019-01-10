@@ -46,6 +46,7 @@ import {
   getUserAttributesFromResponse,
   persistAuthHeadersInDeviceStorage,
   setAuthHeaders,
+  persistResourceType,
 } from './services/auth'
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -124,7 +125,8 @@ export const setHasVerificationBeenAttempted = (
 
 const generateAuthActions = (config: { [key: string]: any }): ActionsExport => {
   const {
-    authUrl,
+    authUrls,
+    // authUrl,
     storage,
     userAttributes,
     userRegistrationAttributes,
@@ -140,6 +142,7 @@ const generateAuthActions = (config: { [key: string]: any }): ActionsExport => {
       email,
       password,
       passwordConfirmation,
+      resourceType,
     } = userRegistrationDetails
     const data = {
       email,
@@ -153,9 +156,10 @@ const generateAuthActions = (config: { [key: string]: any }): ActionsExport => {
     try {
       const response: AuthResponse = await axios({
         method: 'POST',
-        url: authUrl,
+        url: authUrls[resourceType],
         data,
       })
+      persistResourceType(Storage, resourceType)
       setAuthHeaders(response.headers)
       persistAuthHeadersInDeviceStorage(Storage, response.headers)
       const userAttributesToSave = getUserAttributesFromResponse(userAttributes, response)
@@ -170,11 +174,12 @@ const generateAuthActions = (config: { [key: string]: any }): ActionsExport => {
     verificationParams: VerificationParams,
   ) => async function (dispatch: Dispatch<{}>): Promise<void> {
     dispatch(verifyTokenRequestSent())
+    const resourceType = await Storage.getItem('resource-type') as string
     try {
       const response = await axios({
         method: 'GET',
-        url: `${authUrl}/validate_token`,
-        params: verificationParams,
+        url: `${authUrls[resourceType]}/validate_token`,
+        headers: verificationParams,
       })
       setAuthHeaders(response.headers)
       persistAuthHeadersInDeviceStorage(Storage, response.headers)
@@ -192,16 +197,20 @@ const generateAuthActions = (config: { [key: string]: any }): ActionsExport => {
     const {
       email,
       password,
+      rememberMe,
+      resourceType,
     } = userSignInCredentials
     try {
       const response = await axios({
         method: 'POST',
-        url: `${authUrl}/sign_in`,
+        url: `${authUrls[resourceType]}/sign_in`,
         data: {
           email,
           password,
+          remember_me: rememberMe,
         },
       })
+      persistResourceType(Storage, resourceType)
       setAuthHeaders(response.headers)
       persistAuthHeadersInDeviceStorage(Storage, response.headers)
       const userAttributesToSave = getUserAttributesFromResponse(userAttributes, response)
@@ -218,12 +227,13 @@ const generateAuthActions = (config: { [key: string]: any }): ActionsExport => {
       client: await Storage.getItem('client') as string,
       uid: await Storage.getItem('uid') as string,
     }
+    const resourceType = await Storage.getItem('resource-type') as string
     dispatch(signOutRequestSent())
     try {
       await axios({
         method: 'DELETE',
-        url: `${authUrl}/sign_out`,
-        data: userSignOutCredentials,
+        url: `${authUrls[resourceType]}/sign_out`,
+        headers: userSignOutCredentials,
       })
       deleteAuthHeaders()
       deleteAuthHeadersFromDeviceStorage(Storage)

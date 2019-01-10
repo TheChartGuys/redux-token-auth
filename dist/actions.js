@@ -98,16 +98,18 @@ exports.setHasVerificationBeenAttempted = function (hasVerificationBeenAttempted
 // Async Redux Thunk actions:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 var generateAuthActions = function (config) {
-    var authUrl = config.authUrl, storage = config.storage, userAttributes = config.userAttributes, userRegistrationAttributes = config.userRegistrationAttributes;
+    var authUrls = config.authUrls, 
+    // authUrl,
+    storage = config.storage, userAttributes = config.userAttributes, userRegistrationAttributes = config.userRegistrationAttributes;
     var Storage = Boolean(storage.flushGetRequests) ? storage : AsyncLocalStorage_1.default;
     var registerUser = function (userRegistrationDetails) { return function (dispatch) {
         return __awaiter(this, void 0, void 0, function () {
-            var email, password, passwordConfirmation, data, response, userAttributesToSave, error_1;
+            var email, password, passwordConfirmation, resourceType, data, response, userAttributesToSave, error_1;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
                         dispatch(exports.registrationRequestSent());
-                        email = userRegistrationDetails.email, password = userRegistrationDetails.password, passwordConfirmation = userRegistrationDetails.passwordConfirmation;
+                        email = userRegistrationDetails.email, password = userRegistrationDetails.password, passwordConfirmation = userRegistrationDetails.passwordConfirmation, resourceType = userRegistrationDetails.resourceType;
                         data = {
                             email: email,
                             password: password,
@@ -122,11 +124,12 @@ var generateAuthActions = function (config) {
                         _a.trys.push([1, 3, , 4]);
                         return [4 /*yield*/, axios_1.default({
                                 method: 'POST',
-                                url: authUrl,
+                                url: authUrls[resourceType],
                                 data: data,
                             })];
                     case 2:
                         response = _a.sent();
+                        auth_1.persistResourceType(Storage, resourceType);
                         auth_1.setAuthHeaders(response.headers);
                         auth_1.persistAuthHeadersInDeviceStorage(Storage, response.headers);
                         userAttributesToSave = auth_1.getUserAttributesFromResponse(userAttributes, response);
@@ -143,56 +146,61 @@ var generateAuthActions = function (config) {
     }; };
     var verifyToken = function (verificationParams) { return function (dispatch) {
         return __awaiter(this, void 0, void 0, function () {
-            var response, userAttributesToSave, error_2;
+            var resourceType, response, userAttributesToSave, error_2;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
                         dispatch(exports.verifyTokenRequestSent());
-                        _a.label = 1;
+                        return [4 /*yield*/, Storage.getItem('resource-type')];
                     case 1:
-                        _a.trys.push([1, 3, , 4]);
+                        resourceType = _a.sent();
+                        _a.label = 2;
+                    case 2:
+                        _a.trys.push([2, 4, , 5]);
                         return [4 /*yield*/, axios_1.default({
                                 method: 'GET',
-                                url: authUrl + "/validate_token",
-                                params: verificationParams,
+                                url: authUrls[resourceType] + "/validate_token",
+                                headers: verificationParams,
                             })];
-                    case 2:
+                    case 3:
                         response = _a.sent();
                         auth_1.setAuthHeaders(response.headers);
                         auth_1.persistAuthHeadersInDeviceStorage(Storage, response.headers);
                         userAttributesToSave = auth_1.getUserAttributesFromResponse(userAttributes, response);
                         dispatch(exports.verifyTokenRequestSucceeded(userAttributesToSave));
-                        return [3 /*break*/, 4];
-                    case 3:
+                        return [3 /*break*/, 5];
+                    case 4:
                         error_2 = _a.sent();
                         dispatch(exports.verifyTokenRequestFailed());
-                        return [3 /*break*/, 4];
-                    case 4: return [2 /*return*/];
+                        return [3 /*break*/, 5];
+                    case 5: return [2 /*return*/];
                 }
             });
         });
     }; };
     var signInUser = function (userSignInCredentials) { return function (dispatch) {
         return __awaiter(this, void 0, void 0, function () {
-            var email, password, response, userAttributesToSave, error_3;
+            var email, password, rememberMe, resourceType, response, userAttributesToSave, error_3;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
                         dispatch(exports.signInRequestSent());
-                        email = userSignInCredentials.email, password = userSignInCredentials.password;
+                        email = userSignInCredentials.email, password = userSignInCredentials.password, rememberMe = userSignInCredentials.rememberMe, resourceType = userSignInCredentials.resourceType;
                         _a.label = 1;
                     case 1:
                         _a.trys.push([1, 3, , 4]);
                         return [4 /*yield*/, axios_1.default({
                                 method: 'POST',
-                                url: authUrl + "/sign_in",
+                                url: authUrls[resourceType] + "/sign_in",
                                 data: {
                                     email: email,
                                     password: password,
+                                    remember_me: rememberMe,
                                 },
                             })];
                     case 2:
                         response = _a.sent();
+                        auth_1.persistResourceType(Storage, resourceType);
                         auth_1.setAuthHeaders(response.headers);
                         auth_1.persistAuthHeadersInDeviceStorage(Storage, response.headers);
                         userAttributesToSave = auth_1.getUserAttributesFromResponse(userAttributes, response);
@@ -209,7 +217,7 @@ var generateAuthActions = function (config) {
     }; };
     var signOutUser = function () { return function (dispatch) {
         return __awaiter(this, void 0, void 0, function () {
-            var userSignOutCredentials, _a, _b, error_4;
+            var userSignOutCredentials, _a, _b, resourceType, error_4;
             return __generator(this, function (_c) {
                 switch (_c.label) {
                     case 0:
@@ -225,26 +233,29 @@ var generateAuthActions = function (config) {
                     case 3:
                         userSignOutCredentials = (_a.uid = (_c.sent()),
                             _a);
-                        dispatch(exports.signOutRequestSent());
-                        _c.label = 4;
+                        return [4 /*yield*/, Storage.getItem('resource-type')];
                     case 4:
-                        _c.trys.push([4, 6, , 7]);
+                        resourceType = _c.sent();
+                        dispatch(exports.signOutRequestSent());
+                        _c.label = 5;
+                    case 5:
+                        _c.trys.push([5, 7, , 8]);
                         return [4 /*yield*/, axios_1.default({
                                 method: 'DELETE',
-                                url: authUrl + "/sign_out",
-                                data: userSignOutCredentials,
+                                url: authUrls[resourceType] + "/sign_out",
+                                headers: userSignOutCredentials,
                             })];
-                    case 5:
+                    case 6:
                         _c.sent();
                         auth_1.deleteAuthHeaders();
                         auth_1.deleteAuthHeadersFromDeviceStorage(Storage);
                         dispatch(exports.signOutRequestSucceeded());
-                        return [3 /*break*/, 7];
-                    case 6:
+                        return [3 /*break*/, 8];
+                    case 7:
                         error_4 = _c.sent();
                         dispatch(exports.signOutRequestFailed());
                         throw error_4;
-                    case 7: return [2 /*return*/];
+                    case 8: return [2 /*return*/];
                 }
             });
         });

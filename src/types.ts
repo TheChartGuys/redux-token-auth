@@ -87,12 +87,15 @@ export interface UserRegistrationDetails {
   readonly email: string
   readonly password: string
   readonly passwordConfirmation: string
+  readonly resourceType: string
   readonly [key: string]: any
 }
 
 export interface UserSignInCredentials {
   readonly email: string
   readonly password: string
+  readonly rememberMe: boolean
+  readonly resourceType: string
 }
 
 export interface UserSignOutCredentials {

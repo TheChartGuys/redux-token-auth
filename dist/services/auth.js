@@ -46,14 +46,23 @@ var authHeaderKeys = [
     'uid',
 ];
 exports.setAuthHeaders = function (headers) {
+    if (headers['access-token'] === '') {
+        return;
+    }
     authHeaderKeys.forEach(function (key) {
         axios_1.default.defaults.headers.common[key] = headers[key];
     });
 };
 exports.persistAuthHeadersInDeviceStorage = function (Storage, headers) {
+    if (headers['access-token'] === '') {
+        return;
+    }
     authHeaderKeys.forEach(function (key) {
         Storage.setItem(key, headers[key]);
     });
+};
+exports.persistResourceType = function (Storage, resourceType) {
+    Storage.setItem('resource-type', resourceType);
 };
 exports.deleteAuthHeaders = function () {
     authHeaderKeys.forEach(function (key) {
@@ -65,6 +74,7 @@ exports.deleteAuthHeadersFromDeviceStorage = function (Storage) { return __await
         authHeaderKeys.forEach(function (key) {
             Storage.removeItem(key);
         });
+        Storage.removeItem('resource-type');
         return [2 /*return*/];
     });
 }); };

@@ -28,8 +28,8 @@ var generateRequireSignInWrapper = function (_a) {
             function GatedPage() {
                 return _super !== null && _super.apply(this, arguments) || this;
             }
-            GatedPage.prototype.componentWillReceiveProps = function (nextProps) {
-                var history = nextProps.history, hasVerificationBeenAttempted = nextProps.hasVerificationBeenAttempted, isSignedIn = nextProps.isSignedIn;
+            GatedPage.prototype.componentDidMount = function () {
+                var _a = this.props, history = _a.history, hasVerificationBeenAttempted = _a.hasVerificationBeenAttempted, isSignedIn = _a.isSignedIn;
                 if (hasVerificationBeenAttempted && !isSignedIn) {
                     history.replace(redirectPathIfNotSignedIn);
                 }

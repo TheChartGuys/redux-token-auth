@@ -16,15 +16,23 @@ const authHeaderKeys: Array<string> = [
 ]
 
 export const setAuthHeaders = (headers: AuthHeaders): void => {
+  if (headers['access-token'] === '') { return }
+
   authHeaderKeys.forEach((key: string) => {
     axios.defaults.headers.common[key] = headers[key]
   })
 }
 
 export const persistAuthHeadersInDeviceStorage = (Storage: DeviceStorage, headers: AuthHeaders): void => {
+  if (headers['access-token'] === '') { return }
+
   authHeaderKeys.forEach((key: string) => {
     Storage.setItem(key, headers[key])
   })
+}
+
+export const persistResourceType = (Storage: DeviceStorage, resourceType: string): void => {
+  Storage.setItem('resource-type', resourceType)
 }
 
 export const deleteAuthHeaders = (): void => {
@@ -37,6 +45,7 @@ export const deleteAuthHeadersFromDeviceStorage = async (Storage: DeviceStorage)
   authHeaderKeys.forEach((key: string) => {
     Storage.removeItem(key)
   })
+  Storage.removeItem('resource-type')
 }
 
 export const getUserAttributesFromResponse = (
