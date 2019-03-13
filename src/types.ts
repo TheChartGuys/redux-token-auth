@@ -204,7 +204,7 @@ export interface GenerateRequireSignInWrapperConfig {
   readonly redirectPathIfNotSignedIn: string
 }
 
-export type RequireSignInWrapper = (PageComponent: ComponentClass) => ComponentClass
+export type RequireSignInWrapper = (PageComponent: ComponentClass, resourceType: string) => ComponentClass
 
 export interface DeviceStorage {
   readonly getItem: (key: string) => Promise<any>

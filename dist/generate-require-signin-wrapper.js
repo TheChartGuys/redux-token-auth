@@ -22,7 +22,7 @@ var React = require("react");
 var react_redux_1 = require("react-redux");
 var generateRequireSignInWrapper = function (_a) {
     var redirectPathIfNotSignedIn = _a.redirectPathIfNotSignedIn;
-    var requireSignInWrapper = function (PageComponent) {
+    var requireSignInWrapper = function (PageComponent, resourceType) {
         var GatedPage = /** @class */ (function (_super) {
             __extends(GatedPage, _super);
             function GatedPage() {
@@ -30,13 +30,24 @@ var generateRequireSignInWrapper = function (_a) {
             }
             GatedPage.prototype.componentDidMount = function () {
                 var _a = this.props, history = _a.history, hasVerificationBeenAttempted = _a.hasVerificationBeenAttempted, isSignedIn = _a.isSignedIn;
+                var localResourceType = localStorage.getItem('resource-type');
                 if (hasVerificationBeenAttempted && !isSignedIn) {
-                    history.replace(redirectPathIfNotSignedIn);
+                    history.replace({
+                        pathname: redirectPathIfNotSignedIn,
+                        state: { snackbarMessage: { variant: 'error', messages: ['You need to sign in or sign up before continuing.'] } },
+                    });
+                }
+                if (isSignedIn && resourceType !== localResourceType) {
+                    history.replace({
+                        pathname: '/',
+                        state: { snackbarMessage: { variant: 'error', messages: ["You're unable to access that page while logged in as a " + localResourceType + "."] } },
+                    });
                 }
             };
             GatedPage.prototype.render = function () {
                 var _a = this.props, hasVerificationBeenAttempted = _a.hasVerificationBeenAttempted, isSignedIn = _a.isSignedIn;
-                return (hasVerificationBeenAttempted && isSignedIn) ?
+                var localResourceType = localStorage.getItem('resource-type');
+                return (hasVerificationBeenAttempted && isSignedIn && resourceType === localResourceType) ?
                     React.createElement(PageComponent, __assign({}, this.props))
                     :
                         React.createElement("div", null);

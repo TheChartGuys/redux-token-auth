@@ -10,13 +10,11 @@ import {
 const generateRequireSignInWrapper = (
   { redirectPathIfNotSignedIn }: GenerateRequireSignInWrapperConfig
 ): RequireSignInWrapper => {
-  const requireSignInWrapper = (PageComponent: ComponentClass): ComponentClass => {
+  const requireSignInWrapper = (PageComponent: ComponentClass, resourceType: string): ComponentClass => {
     interface WrapperProps {
       readonly hasVerificationBeenAttempted: boolean
       readonly isSignedIn: boolean
-      readonly history: {
-        readonly replace: (path: string) => void
-      }
+      readonly history: any
     }
 
     class GatedPage extends React.Component<WrapperProps> {
@@ -27,8 +25,20 @@ const generateRequireSignInWrapper = (
           isSignedIn,
         } = this.props
 
+        const localResourceType = localStorage.getItem('resource-type')
+
         if (hasVerificationBeenAttempted && !isSignedIn) {
-          history.replace(redirectPathIfNotSignedIn)
+          history.replace({
+            pathname: redirectPathIfNotSignedIn,
+            state: { snackbarMessage: { variant: 'error', messages: ['You need to sign in or sign up before continuing.'] } },
+          });
+        }
+
+        if (isSignedIn && resourceType !== localResourceType) {
+          history.replace({
+            pathname: '/',
+            state: { snackbarMessage: { variant: 'error', messages: [`You're unable to access that page while logged in as a ${localResourceType}.`] } },
+          });
         }
       }
 
@@ -38,7 +48,9 @@ const generateRequireSignInWrapper = (
           isSignedIn,
         } = this.props
 
-        return (hasVerificationBeenAttempted && isSignedIn) ?
+        const localResourceType = localStorage.getItem('resource-type')
+
+        return (hasVerificationBeenAttempted && isSignedIn && resourceType === localResourceType) ?
           <PageComponent {...this.props} />
           :
           <div></div>;

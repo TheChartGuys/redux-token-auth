@@ -24,7 +24,7 @@ const AsyncLocalStorage = {
       resolve(value)
     } catch (error) {
       reject(error)
-    } 
+    }
   }),
 
   clear: () => new Promise((resolve, reject) => {
